@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaintenX Dashboard</title>
+    <style>
+        /* --- CSS VARIABLES FOR THEMING --- */
+        :root {
+            /* Dark Mode (Default) */
+            --bg: #1a1a2e;
+            --card: #16213e;
+            --text: #eaeaea;
+            --input-bg: #0f3460;
+            --primary: #00d2ff;
+            --border: #333;
+            --shadow: rgba(0,0,0,0.5);
+        }
+
+        [data-theme="light"] {
+            /* Light Mode */
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #333333;
+            --input-bg: #f0f0f0;
+            --primary: #007bff;
+            --border: #ddd;
+            --shadow: rgba(0,0,0,0.1);
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin: 0; 
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Header & Toggle */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        h1 { margin: 0; color: var(--primary); font-size: 2.2rem; }
+        
+        .theme-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px var(--shadow);
+        }
+
+        /* Layout */
+        .main-layout { display: flex; gap: 20px; width: 100%; max-width: 1200px; flex-wrap: wrap; }
+        .col-left { flex: 2; display: flex; flex-direction: column; gap: 20px; min-width: 300px; }
+        .col-right { flex: 1; min-width: 300px; }
+        .panel { 
+            background: var(--card); 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px var(--shadow);
+            transition: background 0.3s;
+        }
+        h3 { margin-top: 0; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+        /* Inputs */
+        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
+        input, select { 
+            padding: 10px; 
+            background: var(--input-bg); 
+            border: 1px solid var(--border); 
+            color: var(--text); 
+            border-radius: 5px; 
+            flex: 1; 
+        }
+        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-blue { background: var(--primary); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .btn-blue:hover { opacity: 0.9; transform: translateY(-1px); }
+        
+        .inputs-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+            gap: 10px; 
+            max-height: 400px; 
+            overflow-y: auto; 
+            padding-right: 5px; 
+        }
+        .input-group label { display: block; font-size: 0.75em; opacity: 0.8; margin-bottom: 2px; }
+        .input-group input { width: 100%; box-sizing: border-box; }
+
+        /* Results */
+        .result-header { text-align: center; margin-bottom: 20px; }
+        .result-status { font-size: 1.8em; font-weight: bold; margin: 10px 0; }
+        .comparison { 
+            background: var(--input-bg); 
+            padding: 10px; 
+            border-radius: 5px; 
+            text-align: center; 
+            margin-bottom: 15px; 
+            border: 1px solid var(--border); 
+        }
+        
+        /* Bars */
+        .bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.85em; }
+        .bar-label { width: 100px; text-align: right; padding-right: 10px; font-weight: 500;}
+        .bar-bg { flex: 1; background: var(--input-bg); height: 10px; border-radius: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.5s ease-out; }
+        
+        .safe { color: #00c853; }
+        .danger { color: #ff3d00; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1>🛠️ MaintenX</h1>
+        <button class="theme-btn" onclick="toggleTheme()" id="themeIcon">☀️ Light Mode</button>
+    </div>
+    
+    <div class="main-layout">
+        <div class="col-left">
+            <div class="panel">
+                <h3>1. Select Historical Data</h3>
+                <div class="search-box">
+                    <input type="number" id="machineIdInput" placeholder="Machine ID (e.g. 1)" value="1">
+                    <button class="btn-blue" onclick="searchMachine()">Find History</button>
+                </div>
+                <select id="timestampSelect" onchange="loadTimestampData()" disabled>
+                    <option>Select a timestamp...</option>
+                </select>
+            </div>
+
+            <div class="panel">
+                <h3>2. Sensor Features</h3>
+                <div class="inputs-grid" id="input-container"></div>
+                <button class="btn-blue" style="width:100%; margin-top:15px; font-size: 1.1em;" onclick="predict()">Analyze Current Features</button>
+            </div>
+        </div>
+
+        <div class="col-right">
+            <div class="panel">
+                <h3>3. Model Diagnostics</h3>
+                
+                <div class="comparison">
+                    <small>HISTORICAL GROUND TRUTH:</small><br>
+                    <strong id="actual-label" style="font-size: 1.2em; color: var(--text);">-</strong>
+                </div>
+
+                <div class="result-header">
+                    <small>CURRENT PREDICTION:</small>
+                    <div id="ai-result" class="result-status safe">Waiting...</div>
+                    <div id="ai-conf" style="font-weight: 500; opacity: 0.8;">Model Prediction: -</div>
+                </div>
+
+                <h4 style="margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Failure Probability:</h4>
+                <div id="bars"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- LABEL MAPPING ---
+    // Converts computer codes to human readable text
+    const labelMap = {
+        "none": "No Failure",
+        "comp1": "Component 1",
+        "comp2": "Component 2",
+        "comp3": "Component 3",
+        "comp4": "Component 4",
+        "unknown": "Unknown"
+    };
+
+    const features = [
+        "voltmean_3h", "temperaturemean_3h", "pressuremean_3h", "vibrationmean_3h",
+        "voltsd_3h", "temperaturesd_3h", "pressuresd_3h", "vibrationsd_3h",
+        "voltmean_24h", "temperaturemean_24h", "pressuremean_24h", "vibrationmean_24h",
+        "voltsd_24h", "temperaturesd_24h", "pressuresd_24h", "vibrationsd_24h",
+        "error1count", "error2count", "error3count", "error4count", "error5count",
+        "comp1", "comp2", "comp3", "comp4", "age",
+        "model_model1", "model_model2", "model_model3", "model_model4"
+    ];
+
+    // --- INIT ---
+    const container = document.getElementById("input-container");
+    features.forEach(f => {
+        container.innerHTML += `
+            <div class="input-group">
+                <label>${f}</label>
+                <input type="number" id="${f}" value="0" step="any">
+            </div>`;
+    });
+
+    // --- THEME TOGGLE ---
+    function toggleTheme() {
+        const html = document.documentElement;
+        const btn = document.getElementById("themeIcon");
+        if (html.getAttribute("data-theme") === "dark") {
+            html.setAttribute("data-theme", "light");
+            btn.innerText = "🌙 Dark Mode";
+        } else {
+            html.setAttribute("data-theme", "dark");
+            btn.innerText = "☀️ Light Mode";
+        }
+    }
+
+    // --- LOGIC ---
+    async function searchMachine() {
+        const id = document.getElementById("machineIdInput").value;
+        const select = document.getElementById("timestampSelect");
+        select.innerHTML = "<option>Loading...</option>";
+        
+        try {
+            const res = await fetch(`/machine/${id}`);
+            if(!res.ok) throw new Error("Machine not found");
+            const data = await res.json();
+            select.innerHTML = "<option value=''>-- Select Timestamp --</option>";
+            data.timestamps.forEach(ts => {
+                const opt = document.createElement("option");
+                opt.value = ts;
+                opt.innerText = ts;
+                select.appendChild(opt);
+            });
+            select.disabled = false;
+        } catch(e) {
+            alert(e.message);
+            select.innerHTML = "<option>Error or Not Found</option>";
+        }
+    }
+
+    async function loadTimestampData() {
+        const id = document.getElementById("machineIdInput").value;
+        const ts = document.getElementById("timestampSelect").value;
+        if(!ts) return;
+
+        try {
+            const res = await fetch(`/machine/${id}/${ts}`);
+            const data = await res.json();
+            
+            if (data.features) {
+                for (const [key, val] of Object.entries(data.features)) {
+                    const el = document.getElementById(key);
+                    if(el) el.value = val;
+                }
+            }
+
+            // Handle Actual Label with Mapping
+            const actualEl = document.getElementById("actual-label");
+            let rawLabel = data.actual_failure || "none";
+            if (rawLabel === "null" || rawLabel === "NaN") rawLabel = "none";
+            
+            // Map 'comp1' -> 'Component 1'
+            const humanLabel = labelMap[rawLabel] || rawLabel;
+            
+            actualEl.innerText = humanLabel;
+            actualEl.style.color = (rawLabel === "none") ? "var(--safe)" : "var(--danger)";
+            
+            // Set Color Class (Helper)
+            if (rawLabel === 'none') {
+                actualEl.style.color = "#00c853";
+            } else {
+                actualEl.style.color = "#ff3d00";
+            }
+
+            predict();
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    async function predict() {
+        const payload = {};
+        const idVal = document.getElementById("machineIdInput").value;
+        payload['machineID'] = parseInt(idVal) || 1;
+        features.forEach(f => payload[f] = parseFloat(document.getElementById(f).value) || 0);
+
+        try {
+            const res = await fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            // Update Status Text with Mapping
+            const resultEl = document.getElementById("ai-result");
+            const rawStatus = data.status; // e.g. "comp1" or "none"
+            const humanStatus = labelMap[rawStatus] || rawStatus; // "Component 1" or "No Failure"
+
+            resultEl.innerText = humanStatus;
+            resultEl.className = rawStatus === "none" ? "result-status safe" : "result-status danger";
+            
+            document.getElementById("ai-conf").innerText = `Model Prediction: ${(data.confidence*100).toFixed(1)}%`;
+
+            // Draw Bars with Mapping
+            const barsDiv = document.getElementById("bars");
+            barsDiv.innerHTML = "";
+            
+            // Sort keys to make chart consistent? Optional, but nice.
+            // For now, iterate entries.
+            for (const [key, val] of Object.entries(data.probabilities)) {
+                const pct = (val * 100).toFixed(1);
+                
+                // Map the label for the bar chart
+                const displayName = labelMap[key] || key;
+                
+                // Color Logic
+                const isSafe = key === "none";
+                const barColor = isSafe ? "#00c853" : "#ff3d00";
+                const activeColor = val > 0.05 ? barColor : "var(--input-bg)";
+                const opacity = val > 0.05 ? 1 : 0.3;
+
+                barsDiv.innerHTML += `
+                    <div class="bar-row">
+                        <span class="bar-label">${displayName}</span>
+                        <div class="bar-bg">
+                            <div class="bar-fill" style="width: ${pct}%; background: ${activeColor}; opacity: ${opacity}"></div>
+                        </div>
+                        <span style="width:45px; text-align:right;">${pct}%</span>
+                    </div>`;
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Prediction failed. Is backend running?");
+        }
+    }
+</script>
+</body>
+</html>
